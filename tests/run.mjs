@@ -18,6 +18,7 @@ const suites = [
   ['revocation.test.mjs', 'revoking access for all users (users.is_active)'],
   ['interim.test.mjs', 'migration 005 applied, 006 not yet (one code per session)', { MIGRATIONS_UPTO: '005' }],
   ['legacy.test.mjs', 'before migration 005 is applied (V1 behaviour)', { MIGRATIONS_UPTO: '004' }],
+  ['demo-seed.test.mjs', 'synthetic demo dataset and the demo-only safety barrier'],
 ];
 let failed = 0;
 for (const [file, title, env] of suites) {
