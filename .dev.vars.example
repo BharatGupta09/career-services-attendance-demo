@@ -1,0 +1,4 @@
+# Optional, for `npm run dev` (wrangler dev) only. Copy to .dev.vars (git-ignored).
+# Use a database created for the demo, never one that holds real data.
+# (`npm run demo` needs no database at all.)
+DATABASE_URL=

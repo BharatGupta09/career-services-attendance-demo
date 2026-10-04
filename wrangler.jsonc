@@ -1,0 +1,32 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+
+  // Career Services Attendance — PUBLIC DEMO edition: a single Worker on the
+  // Cloudflare Workers Free plan. It serves the static frontend from ./public and
+  // the JSON API under /api/*. Data lives in Neon PostgreSQL (HTTP driver). No
+  // crons, queues, KV, D1, Durable Objects or other bindings are used.
+  //
+  // The Worker name is deliberately demo-specific so that deploying this
+  // repository can never replace another Worker in the same Cloudflare account.
+  // No account id, routes or custom domains are configured: `wrangler deploy`
+  // uses the account you are logged in to and its workers.dev subdomain.
+  //
+  // Secret (never in this file): DATABASE_URL — the connection string of a
+  // database created for the demo — `npx wrangler secret put DATABASE_URL`.
+  // Nothing is deployed automatically from this repository.
+
+  "name": "career-services-attendance-demo",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-09-01",
+  "workers_dev": true,
+
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "run_worker_first": ["/api/*"]
+  },
+
+  "vars": {
+    "SESSION_HOURS": "12"
+  }
+}
