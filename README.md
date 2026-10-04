@@ -25,7 +25,7 @@ devices and a tamper-resistant audit trail. Coordinators see only their own.
 - [Run the demo locally](#run-the-demo-locally) · [Demo credentials](#demo-credentials) · [Screenshots](#screenshots)
 - [Architecture](#architecture) · [Attendance logic](#attendance-logic) · [Attendance verification](#attendance-verification)
 - [Database schema](#database-schema) · [Security](#authentication--security) · [API](#api) · [Tests](#tests)
-- [Demo data](#demo-data) · [Security & privacy of this repository](#security--privacy-of-this-repository) · [Deploying your own demo](#deploying-your-own-demo) · [Limitations](#limitations)
+- [Demo data](#demo-data) · [Security & privacy of this repository](#security--privacy-of-this-repository) · [Deploying your own demo](#deploying-your-own-demo) · [Limitations](#limitations) · [License](#license)
 
 ## Problem
 
@@ -366,3 +366,7 @@ for the demo.
 - A device key identifies a browser, not a person: clearing site data gives a new
   key. Shared-device flags are a prompt for review, not proof.
 - Audit entries are permanent, even if the events they refer to are deleted.
+
+## License
+
+[MIT](LICENSE). The license covers the code and documentation in this repository; all data in it is synthetic.

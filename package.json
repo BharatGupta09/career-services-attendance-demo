@@ -2,6 +2,7 @@
   "name": "career-services-attendance-demo",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "description": "Public demo of an attendance / time tracking system for student coordinators (Cloudflare Workers + Neon PostgreSQL), with synthetic data",
   "type": "module",
   "engines": {
