@@ -1,0 +1,33 @@
+# Checks only. This workflow never deploys, uses no repository secrets and
+# connects to no database: the tests run against an in-memory PostgreSQL.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      WRANGLER_SEND_METRICS: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Public-safety scan
+        run: npm run check:public
+      - name: Type check
+        run: npm run typecheck
+      - name: Tests (in-memory PostgreSQL)
+        run: npm test
+      - name: Build (wrangler dry run, nothing is deployed)
+        run: npm run build
