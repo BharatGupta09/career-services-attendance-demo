@@ -1,0 +1,33 @@
+{
+  "name": "career-services-attendance-demo",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Public demo of an attendance / time tracking system for student coordinators (Cloudflare Workers + Neon PostgreSQL), with synthetic data",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "demo": "node scripts/demo.mjs",
+    "dev": "wrangler dev",
+    "build": "wrangler deploy --dry-run --outdir dist",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "test": "node tests/run.mjs",
+    "check:public": "node scripts/check-public-safety.mjs",
+    "db:migrate": "node scripts/migrate.mjs",
+    "db:seed-demo": "node scripts/seed-demo.mjs",
+    "db:set-credentials": "node scripts/set-credentials.mjs",
+    "validate": "node scripts/validate.mjs"
+  },
+  "dependencies": {
+    "@neondatabase/serverless": "^1.1.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260926.1",
+    "@electric-sql/pglite": "^0.5.8",
+    "esbuild": "^0.28.1",
+    "typescript": "^5.9.3",
+    "wrangler": "^4.141.0"
+  }
+}

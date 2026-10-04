@@ -1,0 +1,27 @@
+node_modules/
+.wrangler/
+dist/
+
+# Secrets — never commit these.
+.env
+.env.*
+!.env.example
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+credentials*.json
+users*.json
+
+*.log
+.DS_Store
+Thumbs.db
+tests/.build/
+
+# Never publish keys, dumps or data exports.
+*.pem
+*.key
+*.p12
+*.dump
+*.sql.gz
+*.csv
+backups/

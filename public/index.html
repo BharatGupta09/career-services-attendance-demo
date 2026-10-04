@@ -1,0 +1,339 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#0a1330">
+  <title>Career Services Attendance</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" defer></script>
+</head>
+<body data-view="loading">
+  <!-- Reusable brand mark -->
+  <svg width="0" height="0" class="sprite" aria-hidden="true" focusable="false">
+    <symbol id="i-mark" viewBox="0 0 32 32"><rect width="32" height="32" rx="8" fill="currentColor"/><circle cx="16" cy="16" r="8.5" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M16 11v5.2l3.4 2.3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-play" viewBox="0 0 20 20"><path d="M6.5 4.8v10.4a.8.8 0 0 0 1.2.7l8.3-5.2a.8.8 0 0 0 0-1.4L7.7 4.1a.8.8 0 0 0-1.2.7Z" fill="currentColor"/></symbol>
+    <symbol id="i-stop" viewBox="0 0 20 20"><rect x="5" y="5" width="10" height="10" rx="2" fill="currentColor"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 20 20"><path d="M16 10a6 6 0 1 1-1.76-4.24M16 4v3.5h-3.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-signout" viewBox="0 0 20 20"><path d="M8 4H5.5A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8M12.5 13.5 16 10l-3.5-3.5M16 10H8" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-key" viewBox="0 0 20 20"><path d="M12.5 3.5a4 4 0 1 1-3.3 6.3L3.5 15.5V17h2.5v-1.5h1.5V14h1.5l1.2-1.2A4 4 0 0 1 12.5 3.5Zm1 2.5h.01" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 20 20"><path d="M10 6.5v4.2M10 13.6h.01M8.6 3.4 2.3 14.3A1.6 1.6 0 0 0 3.7 16.7h12.6a1.6 1.6 0 0 0 1.4-2.4L11.4 3.4a1.6 1.6 0 0 0-2.8 0Z" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  </svg>
+
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <svg class="brand-mark" aria-hidden="true"><use href="#i-mark"/></svg>
+        <span class="brand-text"><span class="brand-kicker">Career Services</span><span class="brand-name">Attendance</span></span>
+      </div>
+      <div class="account" id="account" hidden>
+        <span class="avatar" id="account-avatar" aria-hidden="true"></span>
+        <span class="account-meta">
+          <span class="account-name" id="account-name"></span>
+          <span class="account-role" id="account-role"></span>
+        </span>
+        <button type="button" class="btn btn-secondary btn-sm" id="sign-out">
+          <svg class="icon" aria-hidden="true"><use href="#i-signout"/></svg><span>Sign out</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container">
+    <div class="loading" id="loading" role="status"><span class="spinner" aria-hidden="true"></span><span>Loading…</span></div>
+    <p class="alert alert-error" id="page-error" role="alert" hidden></p>
+
+    <!-- ================= Sign in ================= -->
+    <section class="login" id="view-login" aria-labelledby="login-title" hidden>
+      <div class="login-brand">
+        <svg class="login-mark" aria-hidden="true"><use href="#i-mark"/></svg>
+        <span class="login-product">Career Services Attendance</span>
+      </div>
+      <div class="card login-card">
+        <h1 id="login-title">Sign in</h1>
+        <form id="login-form" class="form" novalidate>
+          <div class="field">
+            <label for="login-email">Email</label>
+            <input id="login-email" name="email" type="email" inputmode="email" autocomplete="username" autocapitalize="none" spellcheck="false" maxlength="254" required>
+          </div>
+          <div class="field">
+            <label for="login-password">Password</label>
+            <div class="input-group">
+              <input id="login-password" name="password" type="password" autocomplete="current-password" maxlength="200" required>
+              <button type="button" class="input-addon" id="login-toggle" aria-controls="login-password" aria-pressed="false">Show</button>
+            </div>
+          </div>
+          <p class="alert alert-error" id="login-error" role="alert" hidden></p>
+          <button type="submit" class="btn btn-primary btn-lg btn-block" id="login-submit">Sign in</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ================= Student Coordinator ================= -->
+    <section id="view-student" aria-labelledby="welcome" hidden>
+      <div class="page-head">
+        <div>
+          <p class="eyebrow" id="student-date"></p>
+          <h1 id="welcome"></h1>
+        </div>
+      </div>
+
+      <div class="card status-card">
+        <div class="status-main">
+          <div class="status-block" id="status-block">
+            <span class="status-dot" aria-hidden="true"></span>
+            <div>
+              <div class="status-line">
+                <span class="status" id="status"></span>
+                <span class="badge" id="status-badge"></span>
+              </div>
+              <p class="status-detail" id="status-detail"></p>
+            </div>
+          </div>
+          <p class="alert alert-warn" id="overnight-warning" hidden></p>
+          <p class="alert" id="attendance-msg" role="status" hidden></p>
+        </div>
+        <div class="status-action">
+          <button type="button" class="btn btn-attendance" id="attendance-btn" disabled>
+            <svg class="icon icon-login" aria-hidden="true"><use href="#i-play"/></svg>
+            <svg class="icon icon-logout" aria-hidden="true"><use href="#i-stop"/></svg>
+            <span id="attendance-label">LOGIN</span>
+          </button>
+          <p class="action-hint">Attendance time is recorded by the server.</p>
+        </div>
+      </div>
+
+      <div class="metrics">
+        <div class="card metric metric-primary">
+          <span class="metric-label">Today's Worked Time</span>
+          <span class="metric-value" id="today-total">0h 00m</span>
+          <span class="metric-note" id="today-total-note">Completed sessions</span>
+        </div>
+        <div class="card metric metric-session" id="current-session-card">
+          <span class="metric-label">Current Session <span class="live-tag"><span class="live-dot" aria-hidden="true"></span>Live</span></span>
+          <span class="metric-value metric-live" id="current-session">—</span>
+          <span class="metric-note" id="current-session-note">No open session</span>
+        </div>
+        <div class="card metric">
+          <span class="metric-label">Sessions Today</span>
+          <span class="metric-value" id="today-count">0</span>
+          <span class="metric-note">LOGIN → LOGOUT pairs</span>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="card card-flush">
+          <div class="card-head"><h2>Today's Sessions</h2></div>
+          <div class="table-wrap">
+            <table class="table table-stack" id="today-sessions">
+              <thead><tr><th>Login</th><th>Logout</th><th>Duration</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty" id="today-sessions-empty">No sessions yet today.</p>
+        </div>
+        <div class="card card-flush">
+          <div class="card-head"><h2>Today's Activity</h2></div>
+          <div class="table-wrap">
+            <table class="table table-stack" id="today-events">
+              <thead><tr><th>Date</th><th>Time</th><th>Action</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty" id="today-events-empty">No attendance marked today.</p>
+        </div>
+      </div>
+
+      <div class="card card-flush">
+        <div class="card-head">
+          <h2>Attendance History</h2>
+          <form class="filters" id="history-filter">
+            <label class="filter"><span>From</span><input type="date" name="from" required></label>
+            <label class="filter"><span>To</span><input type="date" name="to" required></label>
+            <button type="submit" class="btn btn-primary btn-sm">Show</button>
+          </form>
+        </div>
+        <div class="history-head" aria-hidden="true"><span>Date</span><span>Sessions</span><span>Total</span></div>
+        <div class="history-list" id="history-list"></div>
+        <p class="empty" id="history-empty" hidden>No attendance in this period.</p>
+      </div>
+    </section>
+
+    <!-- ================= Admin ================= -->
+    <section id="view-admin" aria-labelledby="admin-title" hidden>
+      <div class="page-head">
+        <div>
+          <p class="eyebrow" id="admin-date"></p>
+          <h1 id="admin-title">Attendance Overview</h1>
+        </div>
+        <div class="refresh">
+          <span class="updated" id="admin-updated"></span>
+          <button type="button" class="btn btn-secondary btn-sm" id="admin-refresh">
+            <svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg><span>Refresh</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="card code-card" id="code-card" hidden>
+        <div class="code-icon" aria-hidden="true"><svg class="icon"><use href="#i-key"/></svg></div>
+        <div class="code-main">
+          <span class="metric-label">Attendance Code</span>
+          <span class="code-value" id="admin-code" aria-live="polite">––––</span>
+          <p class="metric-note" id="admin-code-note">Share this code with students during attendance verification.</p>
+        </div>
+        <div class="code-meta" id="admin-code-meta">
+          <span class="code-countdown" id="admin-code-countdown"></span>
+          <span id="admin-code-until"></span>
+        </div>
+      </div>
+      <!-- Student sign-ins from new devices, waiting for an admin (migration 007). -->
+      <div class="card card-flush device-alerts" id="device-alerts-card" hidden>
+        <div class="card-head">
+          <h2 class="device-alerts-title"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg>Device Security Alerts</h2>
+          <span class="card-hint" id="device-alerts-hint"></span>
+        </div>
+        <p class="alert" id="device-alerts-msg" role="status" hidden></p>
+        <div class="device-alerts-list" id="device-alerts-list"></div>
+        <p class="empty" id="device-alerts-empty" hidden>No pending device requests.</p>
+        <details class="device-history" id="device-history">
+          <summary>Recent device decisions (last 30 days)</summary>
+          <div class="table-wrap">
+            <table class="table table-stack" id="device-history-table">
+              <thead><tr><th>Student</th><th>Device</th><th>Status</th><th>Decided by</th><th>When</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <p class="empty" id="device-history-empty" hidden>No device decisions in the last 30 days.</p>
+        </details>
+      </div>
+      <p class="alert alert-warn" id="verification-pending" hidden>Attendance codes, device information and the audit trail will start working once the latest database update has been applied. Until then attendance works as before.</p>
+
+      <div class="tiles">
+        <div class="card tile"><span class="metric-label">Student Coordinators</span><span class="tile-value" id="sum-total">–</span></div>
+        <div class="card tile tile-accent tile-in"><span class="metric-label"><span class="dot dot-in" aria-hidden="true"></span>Currently Logged In</span><span class="tile-value" id="sum-in">–</span></div>
+        <div class="card tile tile-out"><span class="metric-label"><span class="dot" aria-hidden="true"></span>Currently Logged Out</span><span class="tile-value" id="sum-out">–</span></div>
+        <div class="card tile tile-accent tile-hours"><span class="metric-label">Today's Total Hours</span><span class="tile-value" id="sum-hours">–</span></div>
+        <div class="card tile"><span class="metric-label">Today's Attendance Events</span><span class="tile-value" id="sum-events">–</span></div>
+      </div>
+
+      <div class="card card-flush">
+        <div class="card-head"><h2>Coordinators — Today</h2></div>
+        <div class="table-wrap">
+          <table class="table table-stack" id="coordinator-table">
+            <thead><tr><th>Coordinator</th><th>Status</th><th>First Login</th><th>Last Logout</th><th>Sessions</th><th>Today's Total</th><th>Device</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="coordinator-empty" hidden>No active Student Coordinators.</p>
+        <p class="card-foot">Today's total counts completed sessions. A session still open is shown live and counted once it is logged out.</p>
+      </div>
+
+      <div class="card card-flush">
+        <div class="card-head"><h2>Today's Activity</h2></div>
+        <div class="table-wrap">
+          <table class="table table-stack" id="activity-table">
+            <thead><tr><th>Date</th><th>Time</th><th>Coordinator</th><th>Action</th><th>Device</th><th>Verified by</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="activity-empty">No attendance marked today.</p>
+      </div>
+
+      <div class="card card-flush" id="admin-history-card">
+        <div class="card-head card-head-stack">
+          <h2>Attendance History</h2>
+          <form class="filters" id="admin-history-filter">
+            <label class="filter"><span>Coordinator</span><select name="coordinator" required></select></label>
+            <label class="filter"><span>From</span><input type="date" name="from" required></label>
+            <label class="filter"><span>To</span><input type="date" name="to" required></label>
+            <button type="submit" class="btn btn-primary btn-sm">Show</button>
+          </form>
+        </div>
+        <p class="card-sub" id="admin-history-title"></p>
+        <div class="table-wrap">
+          <table class="table table-history" id="admin-history-table">
+            <thead><tr><th>Date</th><th>Login</th><th>Logout</th><th>Duration</th><th>Daily Total</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="admin-history-empty" hidden>No attendance in this period.</p>
+      </div>
+
+      <div class="card card-flush" id="devices-card" hidden>
+        <div class="card-head"><h2>Devices</h2><span class="card-hint">Which students have used each device</span></div>
+        <div class="table-wrap">
+          <table class="table table-stack" id="devices-table">
+            <thead><tr><th>Device</th><th>Details</th><th>Used by</th><th>Recent activity</th><th>Flag</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="devices-empty" hidden>No devices recorded yet.</p>
+        <p class="card-foot">A device used by more than one student is marked “Potential shared device” for review. It does not by itself mean anything was done wrong.</p>
+      </div>
+
+      <div class="card card-flush" id="audit-card" hidden>
+        <div class="card-head card-head-stack">
+          <h2>Audit Trail</h2>
+          <form class="filters" id="audit-filter">
+            <label class="filter"><span>Activity</span>
+              <select name="action">
+                <option value="all">All activity</option>
+                <option value="ATTENDANCE_LOGIN">LOGIN</option>
+                <option value="ATTENDANCE_LOGOUT">LOGOUT</option>
+                <option value="INVALID_ATTENDANCE_CODE">Invalid attendance code</option>
+                <option value="DEVICE_SHARING_DETECTED">Potential shared device</option>
+                <option value="NEW_DEVICE">New device</option>
+                <option value="DEVICE_LOGIN_BLOCKED">Sign-in blocked (device not approved)</option>
+                <option value="DEVICE_APPROVED">Device approved</option>
+                <option value="DEVICE_DENIED">Device denied</option>
+                <option value="DEVICE_REGISTERED">First device registered</option>
+                <option value="SIGN_IN">Sign-in</option>
+              </select>
+            </label>
+            <label class="filter"><span>From</span><input type="date" name="from" required></label>
+            <label class="filter"><span>To</span><input type="date" name="to" required></label>
+            <button type="submit" class="btn btn-primary btn-sm">Show</button>
+          </form>
+        </div>
+        <div class="table-wrap">
+          <table class="table table-stack" id="audit-table">
+            <thead><tr><th>Date / Time</th><th>Student</th><th>Activity</th><th>Device</th><th>Verified by</th><th>Result</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <p class="empty" id="audit-empty" hidden>No activity in this period.</p>
+      </div>
+    </section>
+  </main>
+
+  <!-- Attendance verification: the admin's 4-digit code is required for LOGIN and LOGOUT. -->
+  <dialog class="dialog" id="code-dialog" aria-labelledby="code-title" aria-describedby="code-text">
+    <form id="code-form" novalidate>
+      <div class="dialog-icon dialog-icon-primary" aria-hidden="true"><svg class="icon"><use href="#i-key"/></svg></div>
+      <h2 id="code-title">Attendance Verification</h2>
+      <p id="code-text">Enter the 4-digit code provided by an authorized Career Services admin.</p>
+      <label class="sr-only" for="code-input">4-digit attendance code</label>
+      <input id="code-input" class="code-input" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{4}" maxlength="4" placeholder="• • • •" required>
+      <p class="alert alert-error" id="code-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-secondary" id="code-cancel">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="code-submit">Verify &amp; Login</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Shown when a student signs out of the app while their attendance is still open. -->
+  <dialog class="dialog" id="signout-dialog" aria-labelledby="signout-title" aria-describedby="signout-text">
+    <div class="dialog-icon" aria-hidden="true"><svg class="icon"><use href="#i-alert"/></svg></div>
+    <h2 id="signout-title">Attendance still open</h2>
+    <p id="signout-text">Your attendance session is still open. Signing out of the application will not mark your attendance as logged out.</p>
+    <p class="dialog-note">To finish work, go back and press LOGOUT first.</p>
+    <div class="dialog-actions">
+      <button type="button" class="btn btn-secondary" id="signout-anyway">Sign out anyway</button>
+      <button type="button" class="btn btn-primary" id="signout-back" autofocus>Go back</button>
+    </div>
+  </dialog>
+</body>
+</html>
