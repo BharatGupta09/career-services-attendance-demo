@@ -31,6 +31,21 @@ Cloudflare Worker secret named `DATABASE_URL`, never in Git and never in the fro
    (`postgresql://USER:PASSWORD@HOST/DBNAME?sslmode=require`). Treat it as a password.
 
 The Free plan's compute scales to zero when idle, which this app is designed for.
+At the time of writing, the Free plan doesn't ask for a payment method.
+
+How this app talks to Neon (`@neondatabase/serverless`):
+
+- **The Worker** sends each query as an HTTPS request to Neon (`neon()`), so it
+  needs no TCP sockets, pool or Hyperdrive. Use the connection string the console
+  shows by default (the pooled one, host containing `-pooler`).
+- **The scripts** (`db:migrate`, `db:seed-demo`, `db:set-credentials`,
+  `validate`) use the same driver's WebSocket client, because a migration file
+  holds several statements. They work with Neon only. A plain local PostgreSQL
+  has no Neon WebSocket proxy, so locally use `npm run demo` instead.
+- `sslmode=require` and `channel_binding=require` can stay in the copied string.
+  The driver always uses TLS to Neon.
+- The default `neondb_owner` role has `BYPASSRLS`. The app doesn't use RLS
+  (README → Database schema), so nothing depends on it.
 
 ## 2. Apply the migrations and load the demo data
 
@@ -41,6 +56,15 @@ npm ci
 export DEMO_MODE=true
 npm run db:migrate      # asks for the connection string (input hidden)
 npm run db:seed-demo    # asks again; loads the synthetic dataset in one transaction
+```
+
+Windows PowerShell:
+
+```powershell
+npm ci
+$env:DEMO_MODE = "true"
+npm run db:migrate
+npm run db:seed-demo
 ```
 
 You can also set `DEMO_DATABASE_URL` for the session instead of typing the
@@ -59,11 +83,24 @@ connection string at each prompt. Prompted input never lands in your shell histo
 
 ```bash
 npx wrangler login                     # opens a browser; a Free account is fine
+npx wrangler whoami                    # check that this is the intended account
 npm run deploy                         # = wrangler deploy (Worker "career-services-attendance-demo")
-npx wrangler secret put DATABASE_URL   # paste the demo database's connection string
+npx wrangler secret put DATABASE_URL   # paste the demo database's connection string (input hidden)
 ```
 
+These commands are the same in PowerShell. `wrangler deploy` **replaces** any
+Worker of the same name in that account. If `career-services-attendance-demo`
+already exists there for something else, change `name` in `wrangler.jsonc` first.
+The first deploy to an account may ask you to pick a free `workers.dev` subdomain.
+
 The app is then at `https://career-services-attendance-demo.<your-subdomain>.workers.dev`.
+Check it with `/api/health`. It answers `{"status":"ready","database":"connected"}`,
+or `503 not_configured` until the secret is set.
+
+**Free-plan fit:** 100,000 Worker requests per day, counting `/api/*` only,
+because static assets are served free and unlimited. Passwords are checked with
+bcrypt inside PostgreSQL, so the Worker stays within the 10 ms CPU limit. There is
+one database round trip per query and no bindings beyond static assets.
 
 `wrangler.jsonc` contains only the Worker script, static assets and one plain
 variable (`SESSION_HOURS`). There are no account IDs, routes, custom domains or
@@ -74,6 +111,10 @@ the GitHub Actions workflow only type-checks, tests, builds (dry run) and scans.
 
 ```bash
 DEMO_MODE=true npm run validate -- https://career-services-attendance-demo.<your-subdomain>.workers.dev
+```
+
+```powershell
+$env:DEMO_MODE = "true"; npm run validate -- https://career-services-attendance-demo.<your-subdomain>.workers.dev
 ```
 
 Checks the demo database's schema, constraints and indexes and the ten demo users
@@ -127,3 +168,19 @@ suites cover each level (`MIGRATIONS_UPTO`).
 To change the schema later, add `migrations/008_….sql` and run `npm run db:migrate`.
 To rotate the database password, reset it in Neon, then update the Worker's
 `DATABASE_URL` secret.
+
+## Troubleshooting
+
+| Symptom | Cause and fix |
+| --- | --- |
+| `Refusing to run: this script only works against a demo database` | Set `DEMO_MODE=true` (PowerShell: `$env:DEMO_MODE = "true"`) for the command. |
+| `Refusing to run: the target database contains N account(s) outside the demo directory` | Intended: the database is not a demo database. Create a new Neon project or branch. |
+| `Refusing to seed: the database already has attendance, audit or device rows` | Seeding runs once per database (the audit log is append-only). Seed a fresh Neon branch. |
+| `Expected the ten demo users … Run npm run db:migrate first` | Migrations haven't been applied to this database yet. |
+| `This script needs Node.js 22 or newer` | The scripts need the global `WebSocket` of Node 22+. |
+| Script hangs or fails connecting to `localhost` | The scripts need Neon (WebSocket proxy). Use `npm run demo` for a local database. |
+| `/api/health` → `503 not_configured` | `npx wrangler secret put DATABASE_URL`. A placeholder value counts as unset. |
+| `/api/health` → `503 unreachable` | Wrong connection string or password, or the compute is waking up. Retry, then check the string in Neon. |
+| `429 Too many failed login attempts` | Wait 15 minutes. The lock applies to that email from your address. |
+| `wrangler … You are not authenticated` | `npx wrangler login`. |
+| Signed in, but the session immediately ends at `http://127.0.0.1` | Cookies are `Secure`; use `http://localhost:8787`. |

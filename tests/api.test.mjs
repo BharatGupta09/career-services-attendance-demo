@@ -50,6 +50,17 @@ check('no placeholder users remain', (await q(`SELECT count(*)::int n FROM users
 check('directory emails are all on example.com', directory.every((u) => u.email.endsWith('@example.com')));
 check('migrations create no password hashes', directory.every((u) => u.no_hash));
 
+// ---------------- health ----------------
+let h = await call('/api/health');
+check('GET /api/health -> 200 ready, database connected', h.status === 200 && h.json?.status === 'ready' && h.json?.database === 'connected');
+for (const value of ['', 'your_database_url_here']) {
+  const res = await worker.fetch(new Request('http://localhost:8799/api/health'), { ...env, DATABASE_URL: value });
+  h = await res.json();
+  check(`health with DATABASE_URL=${JSON.stringify(value)} -> 503 not_configured`, res.status === 503 && h.database === 'not_configured');
+}
+h = await worker.fetch(new Request('http://localhost:8799/api/auth/me', { headers: { Cookie: `__Host-cs_session=${'a'.repeat(43)}` } }), { ...env, DATABASE_URL: 'your_database_url_here' });
+check('API without a configured database -> generic 500, no details', h.status === 500 && (await h.json()).error === 'Something went wrong. Please try again.');
+
 // ---------------- unauthenticated ----------------
 check('GET /api/auth/me without session -> 401', (await call('/api/auth/me')).status === 401);
 check('GET /api/attendance/today without session -> 401', (await call('/api/attendance/today')).status === 401);
@@ -87,6 +98,16 @@ for (let i = 0; i < 5; i++) await call('/api/auth/login', { method: 'POST', body
 r = await signIn('test.c@example.test');
 check('throttle: after 5 failures even the correct password -> 429', r.status === 429);
 await q(`DELETE FROM login_failures WHERE email='test.c@example.test'`);
+
+// Someone else's failures must not lock the account for everyone (published demo accounts).
+const from = (ip, password) => call('/api/auth/login', { method: 'POST', body: { email: 'test.admin@example.test', password }, headers: { 'CF-Connecting-IP': ip } });
+for (let i = 0; i < 5; i++) await from('203.0.113.9', 'wrong' + i);
+r = await from('203.0.113.9', TEST_PASSWORD);
+check('throttle: the failing address is paused, even with the correct password (429)', r.status === 429);
+r = await from('198.51.100.7', TEST_PASSWORD);
+check('throttle: the same account still signs in from another address', r.status === 200);
+await call('/api/auth/logout', { method: 'POST', cookie: r.setCookie[0]?.split(';')[0] });
+await q(`DELETE FROM login_failures WHERE email='test.admin@example.test'`);
 
 const B = await signIn('test.b@example.test');
 const D = await signIn('test.d@example.test');

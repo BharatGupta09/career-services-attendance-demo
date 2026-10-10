@@ -18,8 +18,12 @@ const COOKIE_NAME = '__Host-cs_session';
 const TOKEN_RE = /^[A-Za-z0-9_-]{43}$/; // 32 random bytes, base64url
 
 // Failed sign-ins allowed per 15 minutes before further attempts are refused.
-const MAX_FAILURES_PER_EMAIL = 5;
+// Counting per email alone would let anyone lock the published demo accounts,
+// so the tight limit is per email from one address (CF-Connecting-IP, set by
+// Cloudflare), with a much higher ceiling per email across all addresses.
+const MAX_FAILURES_PER_EMAIL_IP = 5;
 const MAX_FAILURES_PER_IP = 30;
+const MAX_FAILURES_PER_EMAIL = 100;
 
 // A syntactically valid bcrypt hash that matches no password. Comparing against
 // it when the email is unknown keeps response time the same for known and
@@ -129,7 +133,9 @@ export async function handleSignIn(request: Request, env: Env): Promise<Response
   // One round trip: recent failures for this email / IP, plus the bcrypt check.
   const [row] = await sql`
     WITH recent AS (
-      SELECT count(*) FILTER (WHERE email = ${email})::int             AS by_email,
+      SELECT count(*) FILTER (WHERE email = ${email} AND ip_address IS NOT DISTINCT FROM ${ip}::text)::int
+                                                                         AS by_email_ip,
+             count(*) FILTER (WHERE email = ${email})::int             AS by_email,
              count(*) FILTER (WHERE ip_address = ${ip}::text)::int     AS by_ip
       FROM login_failures
       WHERE attempted_at > now() - interval '15 minutes'
@@ -140,13 +146,13 @@ export async function handleSignIn(request: Request, env: Env): Promise<Response
       FROM (SELECT 1) AS one
       LEFT JOIN users u ON u.email = ${email} AND u.is_active
     )
-    SELECT r.by_email, r.by_ip, c.id, c.full_name, c.email, c.role,
+    SELECT r.by_email_ip, r.by_email, r.by_ip, c.id, c.full_name, c.email, c.role,
            COALESCE(crypt(${password}::text, COALESCE(c.password_hash, ${DUMMY_HASH}::text)) = c.password_hash, false)
              AS password_ok
     FROM recent r CROSS JOIN candidate c`;
 
   if (!row) throw new Error('sign-in query returned no row');
-  if (row.by_email >= MAX_FAILURES_PER_EMAIL || row.by_ip >= MAX_FAILURES_PER_IP) {
+  if (row.by_email_ip >= MAX_FAILURES_PER_EMAIL_IP || row.by_ip >= MAX_FAILURES_PER_IP || row.by_email >= MAX_FAILURES_PER_EMAIL) {
     return fail(429, 'Too many failed login attempts. Please wait 15 minutes and try again.');
   }
 

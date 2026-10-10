@@ -2,12 +2,26 @@ import { handleAdminAudit, handleAdminCode, handleAdminCoordinator, handleAdminD
 import { handleAttendanceLogin, handleAttendanceLogout, handleHistory, handleToday } from './attendance';
 import { handleMe, handleSignIn, handleSignOut } from './auth';
 import { handleDeviceDecision, handleDeviceRequests } from './device-approval';
-import { fail, HttpError } from './http';
+import { databaseConfigured, getSql } from './db';
+import { fail, HttpError, json } from './http';
 import type { Env } from './types';
 
 type Handler = (request: Request, env: Env, url: URL) => Promise<Response>;
 
+// GET /api/health (no session): the Worker is up and the database is reachable.
+// Reports only a status, never configuration details.
+async function handleHealth(_request: Request, env: Env): Promise<Response> {
+  if (!databaseConfigured(env)) return json({ status: 'not_ready', database: 'not_configured' }, 503);
+  try {
+    await getSql(env)`SELECT 1`;
+    return json({ status: 'ready', database: 'connected' });
+  } catch {
+    return json({ status: 'not_ready', database: 'unreachable' }, 503);
+  }
+}
+
 const routes: Record<string, Handler> = {
+  'GET /api/health': handleHealth,
   'POST /api/auth/login': handleSignIn,
   'POST /api/auth/logout': handleSignOut,
   'GET /api/auth/me': handleMe,

@@ -68,7 +68,7 @@ are enforced by the database itself:
 | Coordinator dashboard | Status, live session timer, today's sessions and total, history by day |
 | Zero-downtime migrations | The Worker detects which migrations are applied and runs at the level the database supports, so code can be deployed before a migration |
 | Security hardening | Strict Content-Security-Policy, `nosniff`/`DENY` headers, same-origin checks on every POST, parameterised SQL everywhere, generic error messages, no secrets in logs |
-| Automated testing | 8 suites / 323 checks run the real Worker against an in-memory PostgreSQL. CI runs the tests, a type check, a build and a public-safety scan |
+| Automated testing | 8 suites / 329 checks run the real Worker against an in-memory PostgreSQL. CI runs the tests, a type check, a build and a public-safety scan |
 
 ## Technology stack
 
@@ -92,6 +92,9 @@ cd career-services-attendance-demo
 npm ci
 npm run demo
 ```
+
+The same commands work in Windows PowerShell. If cloning fails with "Filename too
+long", clone into a shorter path or run `git config --global core.longpaths true`.
 
 Open **<http://localhost:8787>** in Chrome or another Chromium-based browser.
 Use `localhost` rather than `127.0.0.1`, because the session cookies are
@@ -255,6 +258,12 @@ docs/DEPLOYMENT.md    deploying your own demo instance
 
 Indexes follow the queries. See `migrations/` for every constraint and index, with comments.
 
+**Row-level security:** none. The Worker uses one database role, and every
+authorisation rule (students see only their own rows, admin-only endpoints) is
+enforced in the API. Neon's default owner role (`neondb_owner`) has `BYPASSRLS`,
+so RLS policies wouldn't apply to it anyway. Treat the connection string as
+full access to the data.
+
 ## Authentication & security
 
 - **Passwords**: bcrypt through PostgreSQL `pgcrypto`, verified with
@@ -266,8 +275,15 @@ Indexes follow the queries. See `migrations/` for every constraint and index, wi
 - **Authorisation**: `requireUser()` resolves the user from the cookie on every
   request. Student endpoints always query with the session's own user ID; any
   user ID in the URL or body is ignored.
-- **Brute force**: 5 failed sign-ins per email (30 per IP) per 15 minutes, stored
-  in PostgreSQL, with no paid rate limiting.
+- **Brute force**: per 15 minutes, 5 failed sign-ins per email from one address,
+  30 per address, and 100 per email across all addresses. The address is
+  Cloudflare's `CF-Connecting-IP`. Counting per email alone would let anyone lock
+  the published demo accounts. Failures are stored in PostgreSQL, so no paid rate
+  limiting is needed. Attendance codes have their own limits (5 wrong per user or
+  30 per address per 15 minutes, and 12 per user per day).
+- **Missing configuration fails safe**: without a `DATABASE_URL` secret, or with a
+  template placeholder such as `your_database_url_here`, `/api/health` answers
+  `503 not_configured` and every other API call returns a generic error.
 - **CSRF**: `SameSite=Strict`, plus POSTs from another origin
   (`Origin`/`Sec-Fetch-Site`) are rejected.
 - **Other**: parameterised SQL (tagged templates → bound parameters), input
@@ -280,6 +296,7 @@ All responses are JSON: `{ "success": true, … }` or `{ "success": false, "erro
 
 | Method & path | Who | Purpose |
 | --- | --- | --- |
+| `GET /api/health` | anyone | `200 {status:"ready",database:"connected"}`, or `503` with `not_configured` / `unreachable` |
 | `POST /api/auth/login` | anyone | `{ email, password, device }` → session cookie |
 | `POST /api/auth/logout` | signed in | ends the app session (not attendance) |
 | `GET /api/auth/me` | signed in | current user |
@@ -297,7 +314,7 @@ All responses are JSON: `{ "success": true, … }` or `{ "success": false, "erro
 ## Tests
 
 ```bash
-npm test            # 8 suites, 323 checks (no database or network needed)
+npm test            # 8 suites, 329 checks (no database or network needed)
 npm run typecheck   # tsc --noEmit, strict
 npm run build       # wrangler deploy --dry-run: bundles the Worker, deploys nothing
 npm run check:public
@@ -366,6 +383,17 @@ for the demo.
 - A device key identifies a browser, not a person: clearing site data gives a new
   key. Shared-device flags are a prompt for review, not proof.
 - Audit entries are permanent, even if the events they refer to are deleted.
+- On a **public** demo deployment, visitors share the demo accounts. A student's
+  first sign-in locks that account to the visitor's browser, so later visitors
+  see a pending device request (approve it as an admin). One visitor's wrong codes
+  can use up a student's daily code-attempt allowance, which then applies to every
+  visitor using that account. Seed with your own `DEMO_PASSWORD` for a public
+  deployment (docs/DEPLOYMENT.md).
+- **Verified locally only.** Tests run the real Worker code against PGlite through
+  a shim of the Neon driver's API. The Worker was also started in the real
+  Cloudflare runtime (`wrangler dev`) without a database. No test talks to an
+  actual Neon database or a deployed Worker. `npm run validate` exists for that
+  (docs/DEPLOYMENT.md).
 
 ## License
 
